@@ -1,2 +1,2 @@
 
-![Dokikong](logo/logo.jpg)
+![Dokikong](logo/logo.png)
