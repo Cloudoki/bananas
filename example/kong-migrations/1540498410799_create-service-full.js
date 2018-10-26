@@ -1,15 +1,27 @@
 module.exports.up = async (kong) => {
-	await kong
-		.createService({
-			name: "openbank-auth-server",
-			url: "http://openbank_auth_server:3000",
-		}).then((service) => service.createRoute(service.service.id,{
+
+	kong.createService({
+		name: "openbank-auth-server",
+		url: "http://openbank_auth_server:3000",
+	},(service)=>{
+
+		await kong.createRoute(service,{
 			protocols: ['http', 'https'],
 			methods: ['GET', 'POST', 'PUT'],
 			paths: ['/auth-server/(?<action>.*)'],
 			strip_path: false,
 			preserve_host: false,
-		}))
+		})
+
+		await kong.createRoute(service,{
+			protocols: ['http', 'https'],
+			methods: ['GET', 'POST', 'PUT'],
+			paths: ['/auth-server-2/(?<action>.*)'],
+			strip_path: false,
+			preserve_host: false,
+		})
+	})
+	
 }
 
 module.exports.down = async (kong) => {
