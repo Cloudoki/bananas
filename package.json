@@ -9,6 +9,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "cassandra-driver": "^3.5.0",
+    "chalk": "^2.4.1",
     "commander": "^2.19.0",
     "knex": "^0.15.2",
     "pg": "^7.5.0",
