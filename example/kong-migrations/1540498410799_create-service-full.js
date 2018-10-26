@@ -3,7 +3,9 @@ module.exports.up = async (kong) => {
 	kong.createService({
 		name: "openbank-auth-server",
 		url: "http://openbank_auth_server:3000",
-	},(service)=>{
+	},(err, service)=>{
+
+		if (err) return err
 
 		await kong.createRoute(service,{
 			protocols: ['http', 'https'],
@@ -21,7 +23,7 @@ module.exports.up = async (kong) => {
 			preserve_host: false,
 		})
 	})
-	
+
 }
 
 module.exports.down = async (kong) => {
