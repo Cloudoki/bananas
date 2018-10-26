@@ -1,0 +1,20 @@
+{
+  "name": "kong-migration-cli",
+  "version": "0.0.1",
+  "description": "A tool to enable the creation of services, routes, upstreams and enabling plugins in Kong from the command-line with json files",
+  "main": "index.js",
+  "author": "Antonio Simoes <sergio@cloudoki.com>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "axios": "^0.18.0",
+    "cassandra-driver": "^3.5.0",
+    "commander": "^2.19.0",
+    "knex": "^0.15.2",
+    "pg": "^7.5.0",
+    "sequelize": "^4.41.0"
+  },
+  "bin": {
+    "kong-migration": "./lib/cli.js"
+  }
+}
