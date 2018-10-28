@@ -1,0 +1,2837 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Tests &amp; Coverage</title>
+    <script>
+      headings = [];
+    
+      onload = function () {
+          headings = document.querySelectorAll('h2');
+          reset();
+      };
+    
+      onscroll = function (e) {
+          var heading = find(window.scrollY);
+          if (!heading) {
+            var current = document.querySelector('#menu a.active');
+            if (current) {
+              current.className = '';
+            }
+            return;
+          }
+          var links = document.querySelectorAll('#menu a')
+                  , link;
+    
+          for (var i = 0, len = links.length; i < len; ++i) {
+              link = links[i];
+              link.className = link.getAttribute('href') == '#' + heading.id ? 'active' : '';
+          }
+      };
+    
+      function find (y) {
+          var i = headings.length
+                  , heading;
+    
+          while (i--) {
+              heading = headings[i];
+              if (y >= heading.offsetTop) {
+                  return heading;
+              }
+          }
+      }
+    
+      function toggle (className) {
+    
+          var elements = document.getElementsByClassName(className);
+    
+          for (var i = 0, il = elements.length; i < il; ++i) {
+              var element = elements[i];
+    
+              if (element.classList.contains('hide')) {
+                  element.classList.remove('hide');
+                  element.classList.add('show');
+              }
+              else {
+                  element.classList.remove('show');
+                  element.classList.add('hide');
+              }
+          };
+      }
+    
+      function reset () {
+    
+          var shownElements = document.getElementsByClassName('show');
+          var filterElements = document.querySelectorAll('input[type=checkbox]');
+    
+          for (var i = 0, il = filterElements.length; i < il; ++i) {
+              filterElements[i].checked = false;
+          }
+    
+          // Check any filters with visible elements
+          for (i = 0, il = shownElements.length; i < il; ++i) {
+              var shownElement = shownElements[i];
+              var classNames = shownElement.className.split(' ');
+              for (var ci = 0, cl = classNames.length; ci < cl; ++ci){
+                  var element = document.getElementById('show-' + classNames[ci]);
+                  if (element) {
+                      element.checked = true;
+                  }
+              }
+          }
+      };
+    
+      function filter (element) {
+    
+          toggle(element.value);
+          reset();
+      }
+    </script>
+    <style>
+        body {
+            font: 14px/1.6 Helvetica, Arial, sans-serif;
+            margin: 0;
+            color: #2c2c2c;
+        }
+    
+        #tests, #coverage, #linting {
+            padding: 60px;
+        }
+    
+        h1 a:hover {
+            text-decoration: none;
+        }
+    
+        a[href^="#"],
+        a[href^="#"]:visited {
+            color: inherit;
+            text-decoration: none;
+        }
+    
+        h2 {
+            width: 80%;
+            margin-top: 80px;
+            margin-bottom: 0;
+            font-weight: 100;
+            letter-spacing: 1px;
+        }
+    
+        ul {
+            margin-top: 20px;
+            padding: 0 15px;
+            width: 100%;
+        }
+    
+        ul li {
+            float: left;
+            width: 40%;
+            margin-top: 5px;
+            margin-right: 60px;
+            list-style: none;
+            padding: 5px 0;
+            font-size: 12px;
+        }
+    
+        #menu {
+            position: fixed;
+            font-size: 12px;
+            overflow-y: auto;
+            top: 0;
+            right: 0;
+            margin: 0;
+            height: 100%;
+            padding: 15px 15px;
+            border-left: 1px solid #eee;
+            background-color: #666;
+            z-index: 1;
+        }
+    
+        #menu::after {
+            display: block;
+            content: '';
+            padding-top: 80px;
+        }
+    
+        #menu li a {
+            display: block;
+            color: white;
+            padding: 0 5px 0 35px;
+            transition: background 300ms;
+            text-decoration: none;
+        }
+    
+        #menu li {
+            position: relative;
+            list-style: none;
+        }
+    
+        #menu a:hover,
+        #menu a.active {
+            text-decoration: none;
+            background: rgba(255, 255, 255, .4);
+        }
+    
+        #menu li:hover .cov {
+            opacity: 1;
+        }
+    
+        #menu li .dirname {
+            opacity: .60;
+            padding-right: 2px;
+        }
+    
+        #menu li .basename {
+            opacity: 1;
+        }
+    
+        #menu .cov, #menu .lint {
+            background: rgba(0, 0, 0, .3);
+            position: absolute;
+            top: 0;
+            font-size: 9px;
+            text-align: center;
+            opacity: .8;
+            width: 22px;
+            border-radius: 10px;
+            padding: 2px 3px;
+        }
+    
+        #files .stats:nth-child(2n):not(.hide) {
+            display: inline-block;
+            margin-top: 15px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    
+        .stats div {
+            float: left;
+            padding: 0 5px;
+        }
+    
+        .stats::after {
+            display: block;
+            content: '';
+            clear: both;
+        }
+    
+        .stats .sloc::after {
+            content: ' SLOC';
+            color: #b6b6b6;
+        }
+    
+        .stats .percentage::after {
+            content: ' coverage';
+            color: #b6b6b6;
+        }
+    
+        .stats .hits::before {
+            content: '(';
+            color: #b6b6b6;
+        }
+    
+        .stats .hits::after {
+            content: ' Covered';
+            color: #b6b6b6;
+        }
+    
+        .stats .misses::after {
+            content: ' Not Covered)';
+            color: #b6b6b6;
+        }
+    
+        .stats .failures::after {
+            content: ' Failures';
+            color: #b6b6b6;
+        }
+    
+        .stats .skipped::after {
+            content: ' Skipped';
+            color: #b6b6b6;
+        }
+    
+        .stats .test-count::after {
+            content: ' Tests';
+            color: #b6b6b6;
+        }
+    
+        .stats .duration::before {
+            content: '(';
+            color: #b6b6b6;
+        }
+    
+        .stats .duration::after {
+            content: ' ms)';
+            color: #b6b6b6;
+        }
+    
+        .high {
+            color: #00d4b4;
+        }
+    
+        .medium {
+            color: #e87d0d;
+        }
+    
+        .low {
+            color: #d4081a;
+        }
+    
+        .terrible {
+            color: #d4081a;
+            font-weight: bold;
+        }
+    
+        #files table {
+            width: 80%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            border: 1px solid #cbcbcb;
+            color: #363636;
+            border-radius: 3px;
+        }
+    
+        #files thead {
+            display: none;
+        }
+    
+        table td.line,
+        table td.lint,
+        table td.hits,
+        table td.original-line {
+            width: 20px;
+            background: #eaeaea;
+            text-align: right;
+            font-size: 11px;
+            padding: 0 10px;
+            color: #949494;
+            white-space: nowrap;
+        }
+    
+        table td.hits {
+            width: 10px;
+            padding: 2px 5px;
+            color: rgba(0, 0, 0, .2);
+            background: #f0f0f0;
+        }
+    
+        table td.lint.empty {
+            width: 0;
+            padding: 0;
+        }
+    
+        table td.lint > span {
+            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            vertical-align: baseline;
+        }
+    
+        table td.lint .errors {
+            background-color: red;
+        }
+    
+        table td.lint .warnings {
+            background-color: orange;
+        }
+    
+        tr.miss td.line,
+        tr.miss td.hits {
+            background: #e6c3c7;
+        }
+    
+        tr.miss td {
+            background: #f8d5d8;
+        }
+    
+        td.source {
+            padding-left: 15px;
+            line-height: 15px;
+            white-space: pre;
+            font: 12px monaco, monospace;
+        }
+    
+        td.source div {
+            display: inline-block;
+        }
+    
+        td.source div.true {
+            background: #bae8bf;
+        }
+    
+        td.source div.false {
+            background: #e8e5ba;
+        }
+    
+        td.source div.never {
+            background: #f8d5d8;
+        }
+    
+        #tests table {
+            width: 80%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            border: 1px solid #cbcbcb;
+            color: #363636;
+            border-radius: 3px;
+        }
+    
+        #tests thead {
+            background: #F5F5F5;
+        }
+    
+        #tests tr {
+            border: 1px solid #ccc;
+        }
+    
+        #tests td {
+            padding-left: 8px;
+            vertical-align: top;
+        }
+    
+        #tests .success:nth-child(2n) {
+            background: #F5F5F5;
+        }
+    
+        #tests .failure {
+            background: #FF9E9E;
+        }
+    
+        #tests table .skipped {
+            background: #AA82FF;
+        }
+    
+        #tests .success {
+            color: #949494;
+        }
+    
+        #tests .failure .test-title {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    
+        #tests .stack {
+            margin-top: 4px;
+            padding-left: 15px;
+            margin-bottom: 12px;
+            font: 12px monaco, monospace;
+            white-space: pre;
+            line-height: 15px;
+        }
+    
+        .hide {
+            display: none;
+        }
+    
+        .show {
+            display: inherit;
+        }
+    
+        #tests table .show {
+            display: table-row;
+        }
+    
+        [data-tooltip] {
+            position: relative;
+        }
+    
+        [data-tooltip]:hover:before {
+            border: solid;
+            border-color: #333 transparent;
+            border-width: 6px 6px 0 6px;
+            bottom: 20px;
+            content: "";
+            left: 0;
+            position: absolute;
+            z-index: 99;
+        }
+    
+        [data-tooltip]:hover:after {
+            background: #333;
+            background: rgba(0, 0, 0, .8);
+            border-radius: 5px;
+            bottom: 26px;
+            color: #fff;
+            left: -10px;
+            padding: 5px 15px;
+            position: absolute;
+            z-index: 98;
+            content: attr(data-tooltip);
+            white-space: pre;
+            text-align: left;
+        }
+    
+        .line[data-tooltip]:hover:after {
+            content: "Line number";
+        }
+    
+        .hits[data-tooltip]:hover:after {
+            content: "Number of hits";
+        }
+    
+        .miss .source[data-tooltip]:hover:after {
+            content: "Missed line";
+        }
+    
+        .miss.true[data-tooltip]:hover:after {
+            content: "Condition always true";
+        }
+    
+        .miss.false[data-tooltip]:hover:after {
+            content: "Condition always false";
+        }
+    
+        .miss.never[data-tooltip]:hover:after {
+            content: "Statement never reached";
+        }
+    
+        .lint .errors[data-tooltip]:hover:after {
+            content: "Linting errors:\A" attr(data-tooltip);
+        }
+    
+        .lint .warnings[data-tooltip]:hover:after {
+            content: "Linting warnings:\A" attr(data-tooltip);
+        }
+    
+        .original-line[data-tooltip]:hover:after {
+            content: "Original line in file " attr(data-tooltip);
+        }
+    
+        #filters {
+            width: 75%;
+            margin-top: 25px;
+        }
+    
+        #filters label {
+            margin-right: 10px;
+        }
+    
+        .lint-stats .lint-errors::after {
+            content: ' linting errors';
+            color: #b6b6b6;
+        }
+    
+        .lint-stats .lint-warnings::after {
+            content: ' linting warnings';
+            color: #b6b6b6;
+        }
+    
+        .lint-entry {
+            color: #b6b6b6;
+            float: none;
+            padding: 0;
+        }
+    
+        .lint-entry .level-ERROR {
+            color: #d4081a;
+        }
+    
+        .lint-entry .level-WARNING {
+            color: #e87d0d;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="menu">
+        <li><a href="#tests">Test Report</a></li>
+        <li><a href="#coverage">Coverage Report</a></li>
+        <li class="">
+            <span class="cov high">80.56</span>
+            <a href="#lib/actions/migrate.js"><span class="dirname">lib/actions/</span><span class="basename">migrate.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov high">76</span>
+            <a href="#lib/database/postgres/index.js"><span class="dirname">lib/database/postgres/</span><span class="basename">index.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov high">100</span>
+            <a href="#lib/database/postgres/models/migration.js"><span class="dirname">lib/database/postgres/models/</span><span class="basename">migration.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov high">93.10</span>
+            <a href="#lib/database/postgres/sequelize/index.js"><span class="dirname">lib/database/postgres/sequelize/</span><span class="basename">index.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov high">100</span>
+            <a href="#lib/kong/index.js"><span class="dirname">lib/kong/</span><span class="basename">index.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov medium">56.00</span>
+            <a href="#lib/kong/route.js"><span class="dirname">lib/kong/</span><span class="basename">route.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov medium">51.52</span>
+            <a href="#lib/kong/service.js"><span class="dirname">lib/kong/</span><span class="basename">service.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov medium">63.64</span>
+            <a href="#lib/utils/index.js"><span class="dirname">lib/utils/</span><span class="basename">index.js</span></a>
+        </li>
+        <li><a href="#linting">Linting Report</a></li>
+        <li>
+            <span class="lint"><span class="low">32</span> || <span class="high">0</span></span>
+            <a href="#lint-example/Dokikongfile.js">example/Dokikongfile.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">3</span> || <span class="high">0</span></span>
+            <a href="#lint-example/kong-migrations/1540498410799_create-service-full.js">example/kong-migrations/1540498410799_create-service-full.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">1</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/actions/init.js">lib/actions/init.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">3</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/actions/make.js">lib/actions/make.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">10</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/actions/migrate.js">lib/actions/migrate.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">9</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/actions/rollback.js">lib/actions/rollback.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">2</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/database/cassandra/index.js">lib/database/cassandra/index.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">9</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/database/database.js">lib/database/database.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">6</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/database/postgres/index.js">lib/database/postgres/index.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">1</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/database/postgres/sequelize/index.js">lib/database/postgres/sequelize/index.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">2</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/kong/index.js">lib/kong/index.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">3</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/kong/route.js">lib/kong/route.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">3</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/kong/service.js">lib/kong/service.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">2</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/templates/template.js">lib/templates/template.js</a>
+        </li>
+        <li>
+            <span class="lint"><span class="low">3</span> || <span class="high">0</span></span>
+            <a href="#lint-lib/utils/index.js">lib/utils/index.js</a>
+        </li>
+    </div>
+    <div id="tests">
+      <h1>Test Report</h1>
+      <div class="stats high">
+          <div class="failures">0</div>
+          <div class="skipped">0</div>
+          <div class="test-count">16</div>
+          <div class="duration">40</div>
+      </div>
+      <div id="filters">
+          <input type="checkbox" checked="" onchange="filter(this)" value="success" id="show-success">
+          <label for="show-success">Show Success</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="failure" id="show-failure">
+          <label for="show-failure">Show Failure</label>
+          <br>
+          <input type="checkbox" checked="" onchange="filter(this)" value="##_actions_test_suite_##" id="show-##_actions_test_suite_##">
+          <label for="show-##_actions_test_suite_##">## actions test suite ##</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="Should_successfuly_migrate_N_files" id="show-Should_successfuly_migrate_N_files">
+          <label for="show-Should_successfuly_migrate_N_files">Should successfuly migrate N files</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="Should_successfuly_migrate_1_file" id="show-Should_successfuly_migrate_1_file">
+          <label for="show-Should_successfuly_migrate_1_file">Should successfuly migrate 1 file</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="Should_successfuly_migrate_0_files" id="show-Should_successfuly_migrate_0_files">
+          <label for="show-Should_successfuly_migrate_0_files">Should successfuly migrate 0 files</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="Should_throw_error_and_stop_migration" id="show-Should_throw_error_and_stop_migration">
+          <label for="show-Should_throw_error_and_stop_migration">Should throw error and stop migration</label>
+      </div>
+      <table>
+          <thead>
+          <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Duration (ms)</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_N_files success">
+              <td class="test-id">1</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate N files Err should be undefined
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_N_files success">
+              <td class="test-id">2</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate N files Should call GetAll migrations
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_N_files success">
+              <td class="test-id">3</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate N files Should call insertMigration
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_N_files success">
+              <td class="test-id">4</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate N files Should call utils.require with 12347_file3.js
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_1_file success">
+              <td class="test-id">5</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate 1 file Err should be undefined
+                  
+              </td>
+              <td class="test-duration">4</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_1_file success">
+              <td class="test-id">6</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate 1 file Should call GetAll migrations
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_1_file success">
+              <td class="test-id">7</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate 1 file Should call insertMigration once
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_1_file success">
+              <td class="test-id">8</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate 1 file Should call utils.require once
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_0_files success">
+              <td class="test-id">9</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate 0 files Err should be undefined
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_0_files success">
+              <td class="test-id">10</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate 0 files Should call GetAll migrations
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_0_files success">
+              <td class="test-id">11</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate 0 files Should NOT call insertMigrations
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_successfuly_migrate_0_files success">
+              <td class="test-id">12</td>
+              <td class="test-title">## actions test suite ## Should successfuly migrate 0 files Should NOT call utils.require
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_throw_error_and_stop_migration success">
+              <td class="test-id">13</td>
+              <td class="test-title">## actions test suite ## Should throw error and stop migration Err should not be undefined
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_throw_error_and_stop_migration success">
+              <td class="test-id">14</td>
+              <td class="test-title">## actions test suite ## Should throw error and stop migration Should call GetAll migrations
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_throw_error_and_stop_migration success">
+              <td class="test-id">15</td>
+              <td class="test-title">## actions test suite ## Should throw error and stop migration Should NOT call insertMigrations
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show ##_actions_test_suite_## Should_throw_error_and_stop_migration success">
+              <td class="test-id">16</td>
+              <td class="test-title">## actions test suite ## Should throw error and stop migration Should call utils.require
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          </tbody>
+      </table>
+    
+    </div>    <div id="coverage">
+        <h1>Code Coverage Report</h1>
+        <div class="stats medium">
+            <div class="percentage">74.09%</div>
+            <div class="sloc">193</div>
+            <div class="hits">143</div>
+            <div class="misses">50</div>
+        </div>
+        <div id="filters">
+          <input type="checkbox" checked="" onchange="filter(this)" value="generated" id="show-generated">
+          <label for="show-generated">Show generated files</label>
+        </div>
+        <div id="files">
+            <div class="file ">
+                <h2 id="lib/actions/migrate.js">lib/actions/migrate.js </h2>
+                <div class="stats high">
+                    <div class="percentage">80.56%</div>
+                    <div class="sloc">36</div>
+                    <div class="hits">29</div>
+                    <div class="misses">7</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/actions/migrate.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const chalk &#x3D; require(&#x27;chalk&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="no-console - Unexpected console statement."></span>
+                          </td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const log &#x3D; console.log</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const utils &#x3D; require(&#x27;../utils&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const action &#x3D; async (kong,migrations,db) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	let executedMigrations &#x3D; await db.getAll()</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>3</td>
+                          <td class="source">	executedMigrations &#x3D; executedMigrations.map((el)&#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__10" class="hit">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		return el.dataValues.file</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="indent - Expected indentation of 1 tab but found 2 spaces."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  })</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__12" class="hit">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  </td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>3</td>
+                          <td class="source">	migrations &#x3D; migrations.filter( (m) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__14" class="hit">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		return !executedMigrations.includes(m)</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	})</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__17" class="hit">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>3</td>
+                          <td class="source">	const steps &#x3D; migrations.length</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__18" class="hit">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__19" class="hit">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">	if (steps &#x3D;&#x3D;&#x3D; 0) log(chalk.green(&#x27;Migrations are up-to-date. Nothing to do here.&#x27;))</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__21" class="hit">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>3</td>
+                          <td class="source">	migrations.forEach(async (migration,index)&#x3D;&gt;{</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__22" class="hit">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		// check if file was already migrated.</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		log(chalk.green(&#x60;Running Migration [${index+1}/${steps}] &gt; ${migration}&#x60;))	</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		// if not, up it.</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__25" class="hit">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="indent - Expected indentation of 2 tabs but found 4 spaces."></span>
+                          </td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">    const m &#x3D; utils.require(&#x60;${process.cwd()}/kong-migrations/${migration}&#x60;)</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__26" class="hit">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__27" class="chunks">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>		if (</div><div class="miss true" data-tooltip>m.up</div><div>) {</div></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__28" class="hit">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="indent - Expected indentation of 3 tabs but found 6 spaces."></span>
+                          </td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">      try {     </td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__30" class="hit">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="no-mixed-spaces-and-tabs - Mixed spaces and tabs."></span>
+                          </td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">  			await m.up(kong)</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__31" class="hit">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="indent - Expected indentation of 3 tabs but found 6 spaces."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      } catch (error) {</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__32" class="miss">
+                          <td class="line" data-tooltip>32</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="indent - Expected indentation of 4 tabs but found 8 spaces."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>        log(chalk.red(error.message))</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__33" class="miss">
+                          <td class="line" data-tooltip>33</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="indent - Expected indentation of 4 tabs but found 8 spaces."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>        throw new Error(&#x60;An error as occured migrating file ${migration}&#x60;)</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__34" class="hit">
+                          <td class="line" data-tooltip>34</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="indent - Expected indentation of 3 tabs but found 6 spaces."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      }</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__35" class="hit">
+                          <td class="line" data-tooltip>35</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__36" class="hit">
+                          <td class="line" data-tooltip>36</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">			try {</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__37" class="hit">
+                          <td class="line" data-tooltip>37</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">				await db.insertMigration({file: migration})</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__38" class="hit">
+                          <td class="line" data-tooltip>38</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			} catch (error) {</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__39" class="miss">
+                          <td class="line" data-tooltip>39</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>				if (error.parent.code !&#x3D;&#x3D; &#x27;23505&#x27;) {</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__40" class="miss">
+                          <td class="line" data-tooltip>40</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>					log(chalk.red(error.message))</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__41" class="miss">
+                          <td class="line" data-tooltip>41</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>					return</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__42" class="hit">
+                          <td class="line" data-tooltip>42</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				}</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__43" class="hit">
+                          <td class="line" data-tooltip>43</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__44" class="miss">
+                          <td class="line" data-tooltip>44</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>				log(chalk.red(&#x27;Service already exists.&#x27;))</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__45" class="hit">
+                          <td class="line" data-tooltip>45</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			}</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__46" class="hit">
+                          <td class="line" data-tooltip>46</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		}</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__47" class="hit">
+                          <td class="line" data-tooltip>47</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	})</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__48" class="hit">
+                          <td class="line" data-tooltip>48</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__49" class="hit">
+                          <td class="line" data-tooltip>49</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__50" class="hit">
+                          <td class="line" data-tooltip>50</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__51" class="hit">
+                          <td class="line" data-tooltip>51</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__52" class="hit">
+                          <td class="line" data-tooltip>52</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports &#x3D; action</td>
+                          
+                        </tr>            <tr id="lib/actions/migrate.js__53" class="hit">
+                          <td class="line" data-tooltip>53</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/database/postgres/index.js">lib/database/postgres/index.js </h2>
+                <div class="stats high">
+                    <div class="percentage">76%</div>
+                    <div class="sloc">25</div>
+                    <div class="hits">19</div>
+                    <div class="misses">6</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/database/postgres/index.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">class PostgresDb {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	constructor(options) {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		const Migration &#x3D; require(&#x27;./models/migration&#x27;)(options)</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">		this.Migration &#x3D; Migration</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__10" class="hit">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	async insertMigration(migration) {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__12" class="chunks">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>		</div><div class="miss never" data-tooltip>await this.Migration.sync()</div><div>      </div></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__13" class="miss">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		return await this.Migration.create({file:migration.file})</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__14" class="hit">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	async removeMigration(migration) {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__17" class="chunks">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>		</div><div class="miss never" data-tooltip>await this.Migration.sync()</div><div>      </div></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__18" class="miss">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		return await this.Migration.destroy({</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__19" class="hit">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			where: {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				file: migration.file,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__21" class="hit">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			},</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__22" class="hit">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		})</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  </td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__25" class="hit">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	async getAll() {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__26" class="chunks">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>		</div><div class="miss never" data-tooltip>return await this.Migration.findAll()</div></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__27" class="hit">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__28" class="hit">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	async getLatest() {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__30" class="chunks">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>		</div><div class="miss never" data-tooltip>return await this.Migration.findAll({limit: 1, order: [[&#x27;file&#x27;,&#x27;DESC&#x27;]]})</div></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__31" class="hit">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__32" class="hit">
+                          <td class="line" data-tooltip>32</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__33" class="hit">
+                          <td class="line" data-tooltip>33</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__34" class="hit">
+                          <td class="line" data-tooltip>34</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__35" class="hit">
+                          <td class="line" data-tooltip>35</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports &#x3D; PostgresDb</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/index.js__36" class="hit">
+                          <td class="line" data-tooltip>36</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/database/postgres/models/migration.js">lib/database/postgres/models/migration.js </h2>
+                <div class="stats high">
+                    <div class="percentage">100%</div>
+                    <div class="sloc">11</div>
+                    <div class="hits">11</div>
+                    <div class="misses">0</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/database/postgres/models/migration.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const Sequelize &#x3D; require(&#x27;../sequelize&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports &#x3D; (options) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  </td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	const sequelize &#x3D; Sequelize(options)</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">	const Migration &#x3D; sequelize.Instance.define(&#x27;kong_entity_migrations&#x27;,{</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		file: {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			type: sequelize.Types.STRING,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__10" class="hit">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			unique: true,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		},</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__12" class="hit">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	})</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__14" class="hit">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">	return Migration</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/models/migration.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/database/postgres/sequelize/index.js">lib/database/postgres/sequelize/index.js </h2>
+                <div class="stats high">
+                    <div class="percentage">93.10%</div>
+                    <div class="sloc">29</div>
+                    <div class="hits">27</div>
+                    <div class="misses">2</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/database/postgres/sequelize/index.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const Sequelize &#x3D; require(&#x27;sequelize&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports &#x3D; (options) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  Sequelize.addHook(&#x27;afterInit&#x27;, (sequelize) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    sequelize.options.handleDisconnects &#x3D; false</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">    sequelize.connectionManager.pool.clear()</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">    sequelize.connectionManager.pool &#x3D; null</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__10" class="hit">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">    sequelize.connectionManager.getConnection &#x3D; function getConnection() {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__11" class="chunks">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>      </div><div class="miss never" data-tooltip>return this._connect(sequelize.config)</div></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__12" class="hit">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">    sequelize.connectionManager.releaseConnection &#x3D; function releaseConnection(connection) {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__14" class="chunks">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>      </div><div class="miss never" data-tooltip>return this._disconnect(connection);</div></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  })</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__17" class="hit">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__18" class="hit">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__19" class="hit">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">  return {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    Types: Sequelize,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__21" class="hit">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    Instance: new Sequelize({</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__22" class="hit">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      dialect: &#x27;postgres&#x27;,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      operatorsAliases: false,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      pool: {</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__25" class="hit">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        max: 5,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__26" class="hit">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        min: 0,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__27" class="hit">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        acquire: 30000,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__28" class="hit">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        idle: 10000,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      },</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__30" class="hit">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="null - Parsing error: Unexpected token ..."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      ...options,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__31" class="hit">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      logging: false,</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__32" class="hit">
+                          <td class="line" data-tooltip>32</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    })</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__33" class="hit">
+                          <td class="line" data-tooltip>33</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  } </td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__34" class="hit">
+                          <td class="line" data-tooltip>34</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    </td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__35" class="hit">
+                          <td class="line" data-tooltip>35</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/database/postgres/sequelize/index.js__36" class="hit">
+                          <td class="line" data-tooltip>36</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/kong/index.js">lib/kong/index.js </h2>
+                <div class="stats high">
+                    <div class="percentage">100%</div>
+                    <div class="sloc">12</div>
+                    <div class="hits">12</div>
+                    <div class="misses">0</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/kong/index.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const service &#x3D; require(&#x27;./service&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const route &#x3D; require(&#x27;./route&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports &#x3D; module.exports &#x3D; { }</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">class Kong {</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	constructor(options) {</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__10" class="hit">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		this.createService &#x3D; service.createService.bind(this, options)</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">		this.removeService &#x3D; service.removeService.bind(this, options)</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__12" class="hit">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">		this.createRoute &#x3D; route.createRoute.bind(this, options)</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">		this.removeRoute &#x3D; route.removeRoute.bind(this, options)</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__14" class="hit">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__17" class="hit">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__18" class="hit">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__19" class="hit">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.Kong &#x3D; Kong</td>
+                          
+                        </tr>            <tr id="lib/kong/index.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/kong/route.js">lib/kong/route.js </h2>
+                <div class="stats medium">
+                    <div class="percentage">56.00%</div>
+                    <div class="sloc">25</div>
+                    <div class="hits">14</div>
+                    <div class="misses">11</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/kong/route.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const http &#x3D; require(&#x27;axios&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="no-console - Unexpected console statement."></span>
+                          </td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const log &#x3D; console.log</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const chalk &#x3D; require(&#x27;chalk&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports &#x3D; module.exports &#x3D; {}</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const createRoute &#x3D; async (options,service, ...route) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__10" class="chunks">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>	</div><div class="miss never" data-tooltip>route.forEach( async(route)&#x3D;&gt;{</div></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__12" class="chunks">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>		</div><div class="miss never" data-tooltip>route.service &#x3D; {</div></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			id: service.id,</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__14" class="chunks">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div class="miss never" data-tooltip>		}</div></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__16" class="miss">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		try {</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__17" class="miss">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>			await http.post(&#x60;${options.kongAdminUrl}/routes&#x60;, route)</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__18" class="hit">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		} catch (error) {</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__19" class="miss">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>			log(chalk.red(&#x27;Route creation failed with message: &#x27; + error.message))</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		}</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__21" class="hit">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__22" class="chunks">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div class="miss never" data-tooltip>	})</div></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__25" class="hit">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const removeRoute &#x3D; async (options, route) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__26" class="chunks">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>	</div><div class="miss never" data-tooltip>try {</div></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__27" class="hit">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__28" class="miss">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		await http.delete(&#x60;${options.kongAdminUrl}/routes/${route}&#x60;)</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__30" class="hit">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	} catch (error) {</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__31" class="miss">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		log(chalk.red(&#x27;Route removal failed with message: &#x27;, error.message))</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__32" class="chunks">
+                          <td class="line" data-tooltip>32</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div class="miss never" data-tooltip>	}</div></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__33" class="hit">
+                          <td class="line" data-tooltip>33</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__34" class="hit">
+                          <td class="line" data-tooltip>34</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__35" class="hit">
+                          <td class="line" data-tooltip>35</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__36" class="hit">
+                          <td class="line" data-tooltip>36</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.createRoute &#x3D; createRoute</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__37" class="hit">
+                          <td class="line" data-tooltip>37</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.removeRoute &#x3D; removeRoute</td>
+                          
+                        </tr>            <tr id="lib/kong/route.js__38" class="hit">
+                          <td class="line" data-tooltip>38</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/kong/service.js">lib/kong/service.js </h2>
+                <div class="stats medium">
+                    <div class="percentage">51.52%</div>
+                    <div class="sloc">33</div>
+                    <div class="hits">17</div>
+                    <div class="misses">16</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/kong/service.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const http &#x3D; require(&#x27;axios&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="no-console - Unexpected console statement."></span>
+                          </td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const log &#x3D; console.log</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const chalk &#x3D; require(&#x27;chalk&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports &#x3D; module.exports &#x3D; { }</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const createService &#x3D; (options, service, cb) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__8" class="chunks">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>	</div><div class="miss never" data-tooltip>http.post(&#x60;${options.kongAdminUrl}/services&#x60;, service)</div></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		.then((response)&#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__10" class="chunks">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>			</div><div class="miss never" data-tooltip>return cb(null, response.data)</div></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		})</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__12" class="chunks">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div class="miss never" data-tooltip>		.catch((e)&#x3D;&gt; cb(e, null))</div></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__14" class="hit">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const removeService &#x3D; async(options, service) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__16" class="chunks">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>	</div><div class="miss never" data-tooltip>try {</div></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__17" class="miss">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		let response &#x3D; await http.get(&#x60;${options.kongAdminUrl}/services/${service}/routes&#x60;)</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__18" class="miss">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		if (response.data) {</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__19" class="miss">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>			response.data.data.forEach(async (route)&#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__20" class="chunks">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>				</div><div class="miss never" data-tooltip>await http.delete(&#x60;${options.kongAdminUrl}/routes/${route.id}&#x60;)</div></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__21" class="hit">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			})</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__22" class="hit">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		}</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    </td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__25" class="miss">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		response &#x3D; await http.get(&#x60;${options.kongAdminUrl}/services/${service}/plugins&#x60;)</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__26" class="miss">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		if (response.data) {</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__27" class="miss">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>			response.data.data.forEach(async (plugin)&#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__28" class="chunks">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>				</div><div class="miss never" data-tooltip>await http.delete(&#x60;${options.kongAdminUrl}/plugins/${plugin.id}&#x60;)</div></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			})</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__30" class="hit">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		}</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__31" class="hit">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">     </td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__32" class="miss">
+                          <td class="line" data-tooltip>32</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		await http.delete(&#x60;${options.kongAdminUrl}/services/${service}&#x60;)</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__33" class="hit">
+                          <td class="line" data-tooltip>33</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__34" class="hit">
+                          <td class="line" data-tooltip>34</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	} catch (error) {</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__35" class="miss">
+                          <td class="line" data-tooltip>35</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		log(chalk.red(&#x27;Service removal failed with message: &#x27;, error))</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__36" class="chunks">
+                          <td class="line" data-tooltip>36</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div class="miss never" data-tooltip>	}</div></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__37" class="hit">
+                          <td class="line" data-tooltip>37</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__38" class="miss">
+                          <td class="line" data-tooltip>38</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>	return this</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__39" class="hit">
+                          <td class="line" data-tooltip>39</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__40" class="hit">
+                          <td class="line" data-tooltip>40</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__41" class="hit">
+                          <td class="line" data-tooltip>41</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__42" class="hit">
+                          <td class="line" data-tooltip>42</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.createService &#x3D; createService</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__43" class="hit">
+                          <td class="line" data-tooltip>43</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.removeService &#x3D; removeService</td>
+                          
+                        </tr>            <tr id="lib/kong/service.js__44" class="hit">
+                          <td class="line" data-tooltip>44</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/utils/index.js">lib/utils/index.js </h2>
+                <div class="stats medium">
+                    <div class="percentage">63.64%</div>
+                    <div class="sloc">22</div>
+                    <div class="hits">14</div>
+                    <div class="misses">8</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/utils/index.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const fs &#x3D; require(&#x27;fs&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const cwd &#x3D; process.cwd()</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports &#x3D; module.exports &#x3D; {}</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">function getDokikongfile() {</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__8" class="miss">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>	const files &#x3D; fs.readdirSync(cwd)</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__9" class="miss">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>	const result &#x3D; files.find((file)&#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__10" class="chunks">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>		</div><div class="miss never" data-tooltip>return file &#x3D;&#x3D;&#x3D; &#x27;Dokikongfile.js&#x27;</div></td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	})</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__12" class="hit">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  </td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__13" class="miss">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>	if (!result || result.length &#x3D;&#x3D;&#x3D; 0) {</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__14" class="miss">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>		throw new Error(&#x27;Could not find Dokikongfile in the current directory&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__17" class="miss">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>	return require(&#x60;${process.cwd()}/${result}&#x60;)</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__18" class="hit">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__19" class="hit">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">function getMigrationFiles() {</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__21" class="miss">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>	return fs.readdirSync(&#x60;${cwd}/kong-migrations/&#x60;).sort()</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__22" class="hit">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint">
+                              <span class="errors" data-tooltip="require-jsdoc - Missing JSDoc comment."></span>
+                          </td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">function r(path) {</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__25" class="miss">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>	return require(path)</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__26" class="hit">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__27" class="hit">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__28" class="hit">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.getDokikongfile &#x3D; getDokikongfile</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.getMigrationFiles &#x3D; getMigrationFiles</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__30" class="hit">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.require &#x3D; r</td>
+                          
+                        </tr>            <tr id="lib/utils/index.js__31" class="hit">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>    <div id="linting">
+        <h1>Linting Report</h1>
+            <div class="lint-stats">
+                <span class="lint-errors low">89</span>
+                <span class="lint-warnings high">0</span>
+            </div>
+            <div class="lint-files">
+                <div class="lint-file">
+                    <h2 id="lint-example/Dokikongfile.js">example/Dokikongfile.js</h2>
+                    <ul>
+                        <li class="lint-entry">L2 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 1 tab but found 1 space.</li>
+                        <li class="lint-entry">L2 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L3 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 2 tabs but found 2 spaces.</li>
+                        <li class="lint-entry">L3 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L3 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L4 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 2 tabs but found 2 spaces.</li>
+                        <li class="lint-entry">L5 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 3 tabs but found 4 spaces.</li>
+                        <li class="lint-entry">L5 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L5 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L6 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 3 tabs but found 4 spaces.</li>
+                        <li class="lint-entry">L6 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L7 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 3 tabs but found 4 spaces.</li>
+                        <li class="lint-entry">L7 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L7 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L8 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 3 tabs but found 4 spaces.</li>
+                        <li class="lint-entry">L8 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L8 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L9 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 3 tabs but found 4 spaces.</li>
+                        <li class="lint-entry">L9 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L9 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L9 - <span class="level-ERROR">ERROR</span> - comma-dangle - Missing trailing comma.</li>
+                        <li class="lint-entry">L10 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 2 tabs but found 2 spaces.</li>
+                        <li class="lint-entry">L10 - <span class="level-ERROR">ERROR</span> - comma-dangle - Missing trailing comma.</li>
+                        <li class="lint-entry">L11 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 1 tab but found 1 space.</li>
+                        <li class="lint-entry">L12 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 1 tab but found 1 space.</li>
+                        <li class="lint-entry">L12 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L13 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 2 tabs but found 3 spaces.</li>
+                        <li class="lint-entry">L13 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L13 - <span class="level-ERROR">ERROR</span> - comma-dangle - Missing trailing comma.</li>
+                        <li class="lint-entry">L14 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 1 tab but found 1 space.</li>
+                        <li class="lint-entry">L14 - <span class="level-ERROR">ERROR</span> - comma-dangle - Missing trailing comma.</li>
+                        <li class="lint-entry">L15 - <span class="level-ERROR">ERROR</span> - eol-last - Newline required at end of file but not found.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                    <h2 id="lint-example/kong-migrations/1540498410799_create-service-full.js">example/kong-migrations/1540498410799_create-service-full.js</h2>
+                    <ul>
+                        <li class="lint-entry">L4 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L5 - <span class="level-ERROR">ERROR</span> - quotes - Strings must use singlequote.</li>
+                        <li class="lint-entry">L17 - <span class="level-ERROR">ERROR</span> - eol-last - Newline required at end of file but not found.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/actions/init.js">lib/actions/init.js</h2>
+                    <ul>
+                        <li class="lint-entry">L5 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/actions/make.js">lib/actions/make.js</h2>
+                    <ul>
+                        <li class="lint-entry">L4 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;settings&#x27; is assigned a value but never used.</li>
+                        <li class="lint-entry">L6 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L15 - <span class="level-ERROR">ERROR</span> - no-undef - &#x27;setting&#x27; is not defined.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/actions/migrate.js">lib/actions/migrate.js</h2>
+                    <ul>
+                        <li class="lint-entry">L2 - <span class="level-ERROR">ERROR</span> - no-console - Unexpected console statement.</li>
+                        <li class="lint-entry">L5 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L11 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 1 tab but found 2 spaces.</li>
+                        <li class="lint-entry">L25 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 2 tabs but found 4 spaces.</li>
+                        <li class="lint-entry">L29 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 3 tabs but found 6 spaces.</li>
+                        <li class="lint-entry">L30 - <span class="level-ERROR">ERROR</span> - no-mixed-spaces-and-tabs - Mixed spaces and tabs.</li>
+                        <li class="lint-entry">L31 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 3 tabs but found 6 spaces.</li>
+                        <li class="lint-entry">L32 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 4 tabs but found 8 spaces.</li>
+                        <li class="lint-entry">L33 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 4 tabs but found 8 spaces.</li>
+                        <li class="lint-entry">L34 - <span class="level-ERROR">ERROR</span> - indent - Expected indentation of 3 tabs but found 6 spaces.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/actions/rollback.js">lib/actions/rollback.js</h2>
+                    <ul>
+                        <li class="lint-entry">L1 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;utils&#x27; is assigned a value but never used.</li>
+                        <li class="lint-entry">L2 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;Kong&#x27; is assigned a value but never used.</li>
+                        <li class="lint-entry">L3 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;database&#x27; is assigned a value but never used.</li>
+                        <li class="lint-entry">L4 - <span class="level-ERROR">ERROR</span> - no-console - Unexpected console statement.</li>
+                        <li class="lint-entry">L6 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L16 - <span class="level-ERROR">ERROR</span> - no-undef - &#x27;chalk&#x27; is not defined.</li>
+                        <li class="lint-entry">L29 - <span class="level-ERROR">ERROR</span> - no-undef - &#x27;chalk&#x27; is not defined.</li>
+                        <li class="lint-entry">L31 - <span class="level-ERROR">ERROR</span> - no-undef - &#x27;chalk&#x27; is not defined.</li>
+                        <li class="lint-entry">L36 - <span class="level-ERROR">ERROR</span> - no-undef - &#x27;chalk&#x27; is not defined.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/database/cassandra/index.js">lib/database/cassandra/index.js</h2>
+                    <ul>
+                        <li class="lint-entry">L1 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;cassandra&#x27; is assigned a value but never used.</li>
+                        <li class="lint-entry">L14 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;migration&#x27; is defined but never used.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/database/database.js">lib/database/database.js</h2>
+                    <ul>
+                        <li class="lint-entry">L3 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L5 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L18 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L18 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;migration&#x27; is defined but never used.</li>
+                        <li class="lint-entry">L21 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L21 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;migration&#x27; is defined but never used.</li>
+                        <li class="lint-entry">L24 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L24 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;migration&#x27; is defined but never used.</li>
+                        <li class="lint-entry">L27 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/database/postgres/index.js">lib/database/postgres/index.js</h2>
+                    <ul>
+                        <li class="lint-entry">L2 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L3 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L10 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L15 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L25 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L29 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/database/postgres/sequelize/index.js">lib/database/postgres/sequelize/index.js</h2>
+                    <ul>
+                        <li class="lint-entry">L30 - <span class="level-ERROR">ERROR</span> - null - Parsing error: Unexpected token ...</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/kong/index.js">lib/kong/index.js</h2>
+                    <ul>
+                        <li class="lint-entry">L7 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L9 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/kong/route.js">lib/kong/route.js</h2>
+                    <ul>
+                        <li class="lint-entry">L2 - <span class="level-ERROR">ERROR</span> - no-console - Unexpected console statement.</li>
+                        <li class="lint-entry">L8 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L25 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/kong/service.js">lib/kong/service.js</h2>
+                    <ul>
+                        <li class="lint-entry">L2 - <span class="level-ERROR">ERROR</span> - no-console - Unexpected console statement.</li>
+                        <li class="lint-entry">L7 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L15 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                </div>            <div class="lint-file">
+                </div>            <div class="lint-file">
+                </div>            <div class="lint-file">
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/templates/template.js">lib/templates/template.js</h2>
+                    <ul>
+                        <li class="lint-entry">L1 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;kong&#x27; is defined but never used.</li>
+                        <li class="lint-entry">L5 - <span class="level-ERROR">ERROR</span> - no-unused-vars - &#x27;kong&#x27; is defined but never used.</li>
+                    </ul>
+                </div>            <div class="lint-file">
+                    <h2 id="lint-lib/utils/index.js">lib/utils/index.js</h2>
+                    <ul>
+                        <li class="lint-entry">L7 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L20 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                        <li class="lint-entry">L24 - <span class="level-ERROR">ERROR</span> - require-jsdoc - Missing JSDoc comment.</li>
+                    </ul>
+                </div>        </div>
+    </div>  </body>
+</html>
