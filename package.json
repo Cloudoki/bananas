@@ -15,7 +15,24 @@
     "pg": "^7.5.0",
     "sequelize": "^4.41.0"
   },
+  "scripts": {
+    "test": "lab -I '__core-js_shared__' -r console -o stdout -r html -o test/coverage.html --context-timeout 2000 --timeout 4000 -t 75",
+    "doc": "jsdoc -d docs -r lib/",
+    "lint": "eslint lib/ --ext .js"
+  },
   "bin": {
     "dokikong": "./lib/cli.js"
-  }
+  },
+  "devDependencies": {
+    "chance": "^1.0.16",
+    "code": "^5.2.1",
+    "eslint": "^5.8.0",
+    "jsdoc": "^3.5.5",
+    "lab": "^17.0.2",
+    "sinon": "^7.1.0"
+  },
+  "pre-commit": [
+    "lint",
+    "test"
+  ]
 }
