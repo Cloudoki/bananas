@@ -11,6 +11,7 @@
     "cassandra-driver": "^3.5.0",
     "chalk": "^2.4.1",
     "commander": "^2.19.0",
+    "joi": "^14.0.4",
     "knex": "^0.15.2",
     "pg": "^7.5.0",
     "sequelize": "^4.41.0"
